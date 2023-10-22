@@ -58,6 +58,28 @@
 from loguru import logger
 import math
 import numpy as np
+import pandas as pd
+
+nome_arquivo = './dataset_futebol.csv'
+
+def carregar_dados(nome_arquivo):
+    # Leitura do arquivo CSV
+    dados_csv_original = pd.read_csv(nome_arquivo, delimiter=';')
+    dados_csv_copia = pd.read_csv(nome_arquivo, delimiter=';')
+                    
+    colunas_desejadas = ['FTR','HS','AS','HST','AST','HC','AC','HR','AR']
+    dados_limpos = dados_csv_copia[colunas_desejadas]
+    
+    dados_limpos_entradas = dados_limpos.drop(columns=['FTR'])
+    dados_limpos_saidas = dados_limpos.drop(columns=['HS','AS','HST','AST','HC','AC','HR','AR'])
+
+    valores_entrada = dados_limpos_entradas.values
+    valores_saida = dados_limpos_saidas.values
+
+    # entrada_dimensao = valores_entrada.shape[1]
+
+    return valores_entrada[3], valores_saida
+
 
 class Neuronio:
     def __init__(self, peso):
@@ -94,8 +116,11 @@ class RedeNeural:
         for camada in [self.camada_entrada, self.camada_oculta, self.camada_saida]:
             for neuronio in camada.neuronios:
                 neuronio.peso = np.random.uniform(-0.1, 0.1)
+                logger.info(f'Peso inicial do neurônio: {neuronio.peso}')
 
     def feedforward(self, entradas):
+        logger.info(f'len(entradas) {len(entradas)}')
+        logger.info(f'len(self.camada_entrada.neuronios) {len(self.camada_entrada.neuronios)}')
         if len(entradas) != len(self.camada_entrada.neuronios):
             raise ValueError("Número incorreto de entradas")
 
@@ -112,6 +137,7 @@ class RedeNeural:
             
             # Aplicar função sigmoidal como função de ativação
             neuronio.valor = self.funcao_sigmoidal(soma_ponderada)
+            logger.info(f'Valor do neurônio oculto: {neuronio.valor}')
 
         # Calcular os valores na camada de saída
         for neuronio in self.camada_saida.neuronios:
@@ -120,6 +146,7 @@ class RedeNeural:
             
             # Aplicar função sigmoidal como função de ativação
             neuronio.valor = self.funcao_sigmoidal(soma_ponderada)
+            logger.info(f'Valor do neurônio de saída: {neuronio.valor}')
 
     def calcular_erro_entropia_cruzada(self, saida_desejada):
         if len(saida_desejada) != len(self.camada_saida.neuronios):
@@ -129,12 +156,15 @@ class RedeNeural:
         for i, neuronio_saida in enumerate(self.camada_saida.neuronios):
             valor_desejado = saida_desejada[i]  # Valor desejado
             valor_previsto = neuronio_saida.valor  # Saída prevista
+            logger.warning(f'valor_desejado: {valor_desejado}')
+            logger.warning(f'valor_previsto: {valor_previsto}')
 
             erro_termo_1 = -valor_desejado * math.log(valor_previsto)
             erro_termo_2 = -(1 - valor_desejado) * math.log(1 - valor_previsto)
 
             erro += erro_termo_1 + erro_termo_2
 
+        logger.info(f'Erro da rede neural: {erro}')
         return erro
 
     def funcao_sigmoidal(self, x):
@@ -144,18 +174,24 @@ class RedeNeural:
         return result_func
 
 def inicia_interface():
+
+    entradas_teste, alvos = carregar_dados(nome_arquivo)
+    logger.success(f'entradas_teste: {entradas_teste}')
+    logger.success(f'alvos: {alvos}')
     # Configurar uma rede neural com 8 entradas, 1 camada oculta com 6 neurônios e 1 saída com 3 neurônios
-    rede_neural = RedeNeural()
+    
 
     # Definir entradas (substitua pelos seus dados)
-    entradas = [17, 8, 14, 4, 6, 6, 0, 0]
+    [HS, AS, HST, AST, HC, AC, HR, AR] = entradas_teste
+    logger.info(f'[HS, AS, HST, AST, HC, AC, HR, AR] --> {[HS, AS, HST, AST, HC, AC, HR, AR]}')
+
+    rede_neural = RedeNeural()
+
+    entradas = [HS, AS, HST, AST, HC, AC, HR, AR]
+
 
     # Executar o feedforward
     rede_neural.feedforward(entradas)
-
-    # # Obter a saída da rede
-    # saida = [int(neuronio.valor > 0.5) for neuronio in rede_neural.camada_saida.neuronios]
-    # logger.success(f'Saída da rede neural: {saida}')
 
     # Definir saída desejada (codificação dummy para H, D, A)
     saida_desejada = [1, 0, 0]  # Por exemplo, para H (vitória em casa)
