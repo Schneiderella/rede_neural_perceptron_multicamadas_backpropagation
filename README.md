@@ -1,2 +1,2 @@
 # rede_neural_perceptron_multicamadas_backpropagation
-Rede Neural Perceptron Multicamadas Algoritmo Backpropagation - Trabalho para Inteligência Computacional
+Rede Neural Perceptron Multicamadas Algoritmo Backpropagation | Trabalho para Inteligência Computacional
