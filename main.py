@@ -92,23 +92,31 @@ class Camada:
 
 class RedeNeural:
     def __init__(self):
-        num_neuronios_camada_entrada = 8
-        num_neuronios_camada_oculta = 6
-        num_neuronios_camada_saida = 3
-        logger.info(f'num_neuronios_camada_entrada {num_neuronios_camada_entrada}')
-        logger.info(f'num_neuronios_camada_oculta {num_neuronios_camada_oculta}')
-        logger.info(f'num_neuronios_camada_saida {num_neuronios_camada_saida}')
+        NEURONIOS_CAMADA_ENTRADA = 8
+        NEURONIOS_CAMADA_OCULTA = 6
+        NEURONIOS_CAMADA_SAIDA = 3
+        QTD_AMOSTRAS = 4
+        QTD_DADOS = 8  # Número de neurônios na camada de entrada
+        TAM_PESOS_OCULTA = QTD_DADOS + 1  # Mais um do bias
+        TAM_PESOS_SAIDA = NEURONIOS_CAMADA_OCULTA + 1  # Mais um do bias
+        logger.info(f'NEURONIOS_CAMADA_ENTRADA {NEURONIOS_CAMADA_ENTRADA}')
+        logger.info(f'NEURONIOS_CAMADA_OCULTA {NEURONIOS_CAMADA_OCULTA}')
+        logger.info(f'NEURONIOS_CAMADA_SAIDA {NEURONIOS_CAMADA_SAIDA}')
+        logger.info(f'QTD_AMOSTRAS {QTD_AMOSTRAS}')
+        logger.info(f'QTD_DADOS {QTD_DADOS}')
+        logger.info(f'TAM_PESOS_OCULTA {TAM_PESOS_OCULTA}')
+        logger.info(f'TAM_PESOS_SAIDA {TAM_PESOS_SAIDA}')
         
         # Camada de entrada com 8 neurônios
-        self.camada_entrada = Camada(num_neuronios_camada_entrada)
+        self.camada_entrada = Camada(NEURONIOS_CAMADA_ENTRADA)
         logger.info(f'camada_entrada {self.camada_entrada}')
         
         # Camada oculta com 6 neurônios
-        self.camada_oculta = Camada(num_neuronios_camada_oculta)
+        self.camada_oculta = Camada(NEURONIOS_CAMADA_OCULTA)
         logger.info(f'camada_oculta {self.camada_oculta}')
 
         # Camada de saída com 3 neurônios (H, D, A)
-        self.camada_saida = Camada(num_neuronios_camada_saida)
+        self.camada_saida = Camada(NEURONIOS_CAMADA_SAIDA)
         logger.info(f'camada_saida {self.camada_saida}')
         self.inicializar_pesos_aleatoriamente()  # Função para inicializar os pesos aleatoriamente
 
