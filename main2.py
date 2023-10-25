@@ -2,15 +2,18 @@ import numpy as np
 import pandas as pd
 from loguru import logger
 
+### python main2.py >> result.txt 2>&1
+
 # Constantes
 NEURONIOS_CAMADA_ENTRADA = 8
 NEURONIOS_CAMADA_INTERMEDIARIA = 6
 NEURONIOS_CAMADA_SAIDA = 3
 QTD_DADOS = 8  # Número de neuronios na camada de entrada
 ## bias não e imprescindível mas pode auxiliar no deslocamento do eixo x p/ dados mais complexos, então foi mantido
-NEURONIOS_CAMADA_INTERMEDIARIA = QTD_DADOS + 1  # Mais um do bias 
+NEURONIOS_CAMADA_INTERMEDIARIA = QTD_DADOS + 1  # Mais um do bias
 TAM_PESOS_SAIDA = NEURONIOS_CAMADA_INTERMEDIARIA + 1  # Mais um do bias
 NOME_ARQUIVO = "./dataset_futebol2.csv"
+
 
 def carregar_dados(NOME_ARQUIVO):
     """
@@ -87,9 +90,7 @@ def calcular_potencial_de_ativacao_neuronio(
     """
     summation_unit = pesos_neuronio[0] * bias
     for neuronio in range(qtd_dados):
-        summation_unit += (
-            vetor_entrada[neuronio] * pesos_neuronio[neuronio + 1]
-        )
+        summation_unit += vetor_entrada[neuronio] * pesos_neuronio[neuronio + 1]
     return summation_unit
 
 
@@ -161,29 +162,35 @@ def erro_intermediaria(SAIDA_REDE, erro_p, indice_n, pesos_neuronio_p, qtd_neuro
     return derivada * sum_erro
 
 
-
 # Função principal
 def interface():
     """
-    Função principal que treina uma rede neural e a utiliza para classificar amostras.
+    Função principal que treina a rede neural e a utiliza para classificar amostras.
 
     """
-    # Defina constantes e inicialize os pesos e bias
+    # Define constantes e inicializa os pesos
     np.random.seed(0)
     vetor_entrada, SAIDA_ESPERADA = carregar_dados(NOME_ARQUIVO)
     QTD_AMOSTRAS = len(vetor_entrada)
     vetor_entrada = np.array(vetor_entrada)
     SAIDA_ESPERADA = np.array(SAIDA_ESPERADA)
     pesos_neuronio1 = np.array(
-        [inicializar_pesos(NEURONIOS_CAMADA_INTERMEDIARIA) for _ in range(NEURONIOS_CAMADA_INTERMEDIARIA)]
+        [
+            inicializar_pesos(NEURONIOS_CAMADA_INTERMEDIARIA)
+            for _ in range(NEURONIOS_CAMADA_INTERMEDIARIA)
+        ]
     )  # Pesos da camada intermediaria
     pesos_neuronio2 = np.array(
         [inicializar_pesos(TAM_PESOS_SAIDA) for _ in range(NEURONIOS_CAMADA_SAIDA)]
     )  # Pesos da camada de saida
-    bias1 = np.ones(NEURONIOS_CAMADA_INTERMEDIARIA) # cria um array NumPy preenchido com o valor 1.0 (float) em cada elemento no tamanho da camada intermediaria
-    bias2 = np.ones(NEURONIOS_CAMADA_SAIDA) # cria um array NumPy preenchido com o valor 1.0 (float) em cada elemento no tamanho da camada de saida
-    summation_unit1 = np.zeros(
+    bias1 = np.ones(
         NEURONIOS_CAMADA_INTERMEDIARIA
+    )  # cria um array NumPy preenchido com o valor 1.0 (float) em cada elemento no tamanho da camada intermediaria
+    bias2 = np.ones(
+        NEURONIOS_CAMADA_SAIDA
+    )  # cria um array NumPy preenchido com o valor 1.0 (float) em cada elemento no tamanho da camada de saida
+    summation_unit1 = np.zeros(
+        NEURONIOS_CAMADA_INTERMEDIARIA # inicializa o array com 0.0
     )  # somatorio dos neuronios da camada intermediaria
     summation_unit2 = np.zeros(
         NEURONIOS_CAMADA_SAIDA
@@ -200,7 +207,8 @@ def interface():
     erro2 = np.zeros(
         NEURONIOS_CAMADA_SAIDA
     )  # Gradientes dos neuronios da camada de saida
-    taxa_aprendizagem = 0.5
+    taxa_aprendizagem = 0.3
+    momentum = 0.9
     precisao_requerida = 1e-6
     epocas = 0
     erro_quadratico_medio = 0
@@ -219,14 +227,14 @@ def interface():
         erro_individual = 0
         # Início Fase Forward
         for amostra in range(QTD_AMOSTRAS):
-            logger.info('\n    --------------------------------------------------------------------------->')
+            logger.info(
+                "\n    --------------------------------------------------------------------------->"
+            )
             erro_individual = 0
             # somatorio camada intermediaria
             for neuronio in range(NEURONIOS_CAMADA_INTERMEDIARIA):
                 # 1ª FASE
-                summation_unit1[
-                    neuronio
-                ] = calcular_potencial_de_ativacao_neuronio(
+                summation_unit1[neuronio] = calcular_potencial_de_ativacao_neuronio(
                     pesos_neuronio1[neuronio],
                     vetor_entrada[amostra],
                     bias1[neuronio],
@@ -236,31 +244,41 @@ def interface():
                 SAIDA_REDE_1[neuronio] = sigmoide(summation_unit1[neuronio])
             # somatorio camada de saida
             for neuronio in range(NEURONIOS_CAMADA_SAIDA):
-                summation_unit2[
-                    neuronio
-                ] = calcular_potencial_de_ativacao_neuronio(
+                summation_unit2[neuronio] = calcular_potencial_de_ativacao_neuronio(
                     pesos_neuronio2[neuronio],
                     SAIDA_REDE_1,
                     bias2[neuronio],
                     NEURONIOS_CAMADA_INTERMEDIARIA,
                 )
                 SAIDA_REDE_INTERMEDIARIA[neuronio] = sigmoide(summation_unit2[neuronio])
+                # logger.error(f'SAIDA_REDE_INTERMEDIARIA: {SAIDA_REDE_INTERMEDIARIA}')
+                # logger.success(f'SAIDA_REDE_INTERMEDIARIA[neuronio]: {SAIDA_REDE_INTERMEDIARIA[neuronio]}')
                 # erro
                 erro_individual = erro_individual + np.sum(
-                    (SAIDA_ESPERADA[amostra][neuronio] - SAIDA_REDE_INTERMEDIARIA[neuronio]) ** 2
+                    (
+                        SAIDA_ESPERADA[amostra][neuronio]
+                        - SAIDA_REDE_INTERMEDIARIA[neuronio]
+                    )
+                    ** 2
                 )
+            logger.error(f'--> SAIDA_REDE_INTERMEDIARIA: {SAIDA_REDE_INTERMEDIARIA}')
+            logger.error(f'--> erro_individual: {erro_individual}')
             erro_global = erro_individual / 2
             erro_quadratico_medio = erro_quadratico_medio + erro_global
             # Fim Forward --------------------------------------------------------------------------->
-            logger.info('\n    ---------------------------------------------------------------------------|')
+            logger.info(
+                "\n    ---------------------------------------------------------------------------|"
+            )
 
-
-            logger.info('\n<---------------------------------------------------------------------------    ')
+            logger.info(
+                "\n<---------------------------------------------------------------------------    "
+            )
             # Início Backpropagation <----------------------------------------------------------------
             # Determinar o gradiente da camada de saida
             for neuronio in range(NEURONIOS_CAMADA_SAIDA):
                 erro2[neuronio] = calcular_erro_saida(
-                    SAIDA_ESPERADA[amostra][neuronio], SAIDA_REDE_INTERMEDIARIA[neuronio]
+                    SAIDA_ESPERADA[amostra][neuronio],
+                    SAIDA_REDE_INTERMEDIARIA[neuronio],
                 )
             # Determinar o gradiente da camada intermediaria
             for neuronio in range(NEURONIOS_CAMADA_INTERMEDIARIA):
@@ -272,14 +290,12 @@ def interface():
                     NEURONIOS_CAMADA_SAIDA,
                 )
 
-
             # Ajuste de pesos da camada de saida
             for neuronio in range(NEURONIOS_CAMADA_SAIDA):
                 # Atualizando o bias da camada de saida
                 pesos_neuronio2[neuronio][0] += (
                     taxa_aprendizagem * erro2[neuronio] * bias2[neuronio]
                 )
-
 
                 # Atualizando os pesos
                 for peso_index in range(1, TAM_PESOS_SAIDA):
@@ -294,7 +310,6 @@ def interface():
                 pesos_neuronio1[neuronio][0] += (
                     taxa_aprendizagem * erro1[neuronio] * bias1[neuronio]
                 )
-
 
                 # Atualizando os pesos
                 for peso_index in range(1, NEURONIOS_CAMADA_INTERMEDIARIA):
@@ -314,15 +329,15 @@ def interface():
             <= precisao_requerida
         ):
             break
-        logger.info('\n-------------------------------------------------------------------------------')
+        logger.info(
+            "\n-------------------------------------------------------------------------------"
+        )
     logger.info(f"REDE TREINADA COM {epocas} epocas")
     # Fase de operação
     for amostra in range(QTD_AMOSTRAS):
         for neuronio in range(NEURONIOS_CAMADA_INTERMEDIARIA):
             # 1ª FASE
-            summation_unit1[
-                neuronio
-            ] = calcular_potencial_de_ativacao_neuronio(
+            summation_unit1[neuronio] = calcular_potencial_de_ativacao_neuronio(
                 pesos_neuronio1[neuronio],
                 vetor_entrada[amostra],
                 bias1[neuronio],
@@ -339,15 +354,14 @@ def interface():
         logger.info(f"\nAmostra {amostra} ", end="")
 
         for neuronio in range(NEURONIOS_CAMADA_SAIDA):
-            summation_unit2[
-                neuronio
-            ] = calcular_potencial_de_ativacao_neuronio(
+            summation_unit2[neuronio] = calcular_potencial_de_ativacao_neuronio(
                 pesos_neuronio2[neuronio],
                 SAIDA_REDE_1,
                 bias2[neuronio],
                 NEURONIOS_CAMADA_INTERMEDIARIA,
             )
             SAIDA_REDE_INTERMEDIARIA[neuronio] = sigmoide(summation_unit2[neuronio])
+            logger.warning(f'______SAIDA_REDE_INTERMEDIARIA[neuronio]: {SAIDA_REDE_INTERMEDIARIA[neuronio]}')
             ### nomear essa função
             if SAIDA_REDE_INTERMEDIARIA[neuronio] > 0.5:
                 logger.info(f"{1.0} ", end="")
